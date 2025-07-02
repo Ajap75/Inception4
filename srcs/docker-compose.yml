@@ -1,0 +1,112 @@
+version: "3.8" # Version du format Docker Compose utilisé (ici, la 3.8)
+
+######################
+# DÉFINITION DES SERVICES
+######################
+
+services:
+
+  ##################
+  # Service NGINX
+  ##################
+  nginx:
+    build:
+      context: ./requirements/nginx     # Chemin vers le dossier contenant le Dockerfile NGINX
+      dockerfile: Dockerfile            # Nom du Dockerfile (optionnel si c'est "Dockerfile" par défaut)
+      args:
+        DOMAIN_NAME: ${DOMAIN_NAME}
+    container_name: inception-nginx     # Nom personnalisé du conteneur pour le retrouver facilement
+
+    ports:
+      - "443:443"                      # Expose le port 443 du conteneur (HTTPS) vers le port 443 de l’hôte
+
+    volumes:
+      - /home/anastruc/data/wordpress:/var/www/wordpress:ro    # Bind-mount explicite : NGINX sert les fichiers WP en lecture seule
+      - ./requirements/nginx/conf/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+                                         # Monte le fichier de configuration NGINX personnalisé depuis l'hôte (en lecture seule)
+
+    networks:
+      - inception_network               # Place NGINX sur le même réseau Docker que les autres services
+
+    depends_on:
+      - wordpress                      # Démarre ce conteneur seulement après que WordPress soit prêt
+
+  ##################
+  # Service WORDPRESS (PHP-FPM)
+  ##################
+  wordpress:
+    build:
+      context: ./requirements/wordpress
+      dockerfile: Dockerfile
+    container_name: inception-wordpress
+
+    volumes:
+      - wordpress:/var/www/wordpress
+
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME}
+      - MYSQL_HOST=${MYSQL_HOST}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - WP_TITLE=${WP_TITLE}
+      - WP_ADMIN=${WP_ADMIN}
+      - WP_ADMIN_PWD=${WP_ADMIN_PWD}
+      - WP_ADMIN_EMAIL=${WP_ADMIN_EMAIL}
+      - WP_USER=${WP_USER}
+      - WP_USER_PWD=${WP_USER_PWD}
+      - WP_USER_EMAIL=${WP_USER_EMAIL}
+      # Ces variables sont utilisées par tes scripts d'initialisation WP pour paramétrer le site
+
+    networks:
+      - inception_network
+
+    depends_on:
+      - mariadb                         # Lance ce service seulement après MariaDB
+
+  ##################
+  # Service MARIADB (Base de données)
+  ##################
+  mariadb:
+    build:
+      context: ./requirements/mariadb
+      args:
+        MYSQL_DATABASE: ${MYSQL_DATABASE}
+        MYSQL_USER: ${MYSQL_USER}
+        MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      dockerfile: Dockerfile
+    container_name: inception-mariadb
+
+    volumes:
+      - mariadb:/var/lib/mysql
+
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+
+    networks:
+      - inception_network
+
+volumes:
+  mariadb:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/anastruc/data/mariadb
+  wordpress:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/anastruc/data/wordpress
+
+######################
+# RÉSEAU DOCKER COMMUN
+######################
+
+networks:
+  inception_network:
+    driver: bridge                           # Crée un réseau "bridge" (virtuel) pour connecter tous les services

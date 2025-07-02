@@ -16,7 +16,7 @@ DCOMPOSE = docker compose -f $(COMPOSE_FILE)  # Commande Docker Compose explicit
 # -------------------------
 all: up
 
-up:
+up: init_data
 	@$(DCOMPOSE) up -d --build
 # Construit les images et démarre les conteneurs en mode détaché
 
@@ -96,3 +96,4 @@ re: fclean up
 # -------------------------
 # Fin du Makefile
 # -------------------------
+.PHONY=re hardclean clean down logs

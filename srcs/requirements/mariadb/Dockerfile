@@ -1,5 +1,5 @@
 # ----- Dockerfile mariadb -----
-FROM debian:bookworm
+FROM debian:bullseye
 
 ARG MYSQL_DATABASE
 ARG MYSQL_USER

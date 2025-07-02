@@ -68,4 +68,5 @@ chown -R www-data:www-data "$WP_DIR"
 #  START PHP-FPM
 # ----------------------------
 echo "🚦 Starting PHP-FPM..."
-php-fpm8.2 -F
+mkdir -p /run/php
+php-fpm7.4 -F

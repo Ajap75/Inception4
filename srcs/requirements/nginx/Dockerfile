@@ -1,5 +1,5 @@
-# Utiliser une image de base minimale (debian:bookworm) pour Nginx
-FROM debian:bookworm
+# Utiliser une image de base minimale (debian:Bullseye) pour Nginx
+FROM debian:bullseye
 
 # Installer Nginx et OpenSSL (pour le certificat)
 RUN apt-get update && apt-get install -y nginx openssl 

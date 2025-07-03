@@ -44,6 +44,9 @@ logs:
 # -------------------------
 down:
 	@$(DCOMPOSE) down --remove-orphans
+
+restart:
+	@$(DCOMPOSE) restart
 # Arrête et supprime les conteneurs créés par ce compose file
 
 # -------------------------
